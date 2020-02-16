@@ -1,0 +1,26 @@
+version: '3.7'
+
+services:
+
+  jenkins-master:
+    image: 'jenkinsci/blueocean:1.22.0'
+    ports:
+      - '8080:8080'
+      - '8443:8443'
+      - '50000:50000'
+    volumes:
+      - jenkins-data:/var/jenkins_home
+    networks:
+     - jenkins-net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: none
+      placement:
+        constraints: [node.platform.arch==x86_64]
+
+volumes:
+  jenkins-data:
+
+networks:
+  jenkins-net:
