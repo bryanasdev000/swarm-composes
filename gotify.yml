@@ -8,17 +8,13 @@ services:
       - '8040:80'
     volumes:
       - gotify-data:/app/data
-    networks:
-     - gotify-net
     deploy:
       replicas: 1
       restart_policy:
-        condition: none
+        condition: any
       placement:
         constraints: [node.platform.arch==x86_64]
 
 volumes:
   gotify-data:
 
-networks:
-  gotify-net:
