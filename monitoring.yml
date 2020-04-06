@@ -12,8 +12,6 @@ services:
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
-    networks:
-      - monitor-net     
     deploy:
       placement:
         constraints:
@@ -24,6 +22,7 @@ services:
 
   node-exporter:
     image: prom/node-exporter:v0.18.1
+    hostname: '{{.Node.Hostname }}'
     ports:
       - '9100:9100'
     volumes:
@@ -35,8 +34,6 @@ services:
       - '--path.sysfs=/host/sys'
       - '--collector.filesystem.ignored-mount-points'
       - "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
-    networks:
-      - monitor-net
     deploy:
       placement:
         constraints:
@@ -54,8 +51,6 @@ services:
     command:
       - '--config.file=/etc/alertmanager/config.yml'
       - '--storage.path=/alertmanager'
-    networks:
-      - monitor-net
     deploy:
       placement:
         constraints:
@@ -64,8 +59,9 @@ services:
       restart_policy:
         condition: on-failure    
 
-  cadvisor:
+  cadvisor-x86:
     image: gcr.io/google-containers/cadvisor:v0.35.0
+    hostname: '{{.Node.Hostname }}'
     ports:
       - '8088:8080'   
     volumes:
@@ -73,12 +69,28 @@ services:
       - /var/run:/var/run:rw
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
-    networks:
-      - monitor-net
     deploy:
       placement:
         constraints:
           - node.platform.arch==x86_64
+      mode: global
+      restart_policy:
+        condition: on-failure
+
+  cadvisor-arm:
+    image: unibaktr/cadvisor:v0.34.0
+    hostname: '{{.Node.Hostname }}'
+    ports:
+      - '8089:8080'   
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    deploy:
+      placement:
+        constraints:
+          - node.platform.arch!=x86_64
       mode: global
       restart_policy:
         condition: on-failure
@@ -94,8 +106,6 @@ services:
       - ./configs/grafana/provisioning/:/etc/grafana/provisioning/
     env_file:
       - ./configs/grafana/config.monitoring
-    networks:
-      - monitor-net
     deploy:
       placement:
         constraints:
@@ -108,5 +118,3 @@ volumes:
     prometheus_data: 
     grafana_data:
 
-networks:
-  monitor-net:
