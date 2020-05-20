@@ -3,7 +3,7 @@ version: '3.7'
 services:
 
   gotify:
-    image: 'gotify/server:2.0.13'
+    image: 'gotify/server-arm7:2.0.13'
     ports:
       - '8040:80'
     volumes:
@@ -12,8 +12,6 @@ services:
       replicas: 1
       restart_policy:
         condition: any
-      placement:
-        constraints: [node.platform.arch==x86_64]
 
 volumes:
   gotify-data:
