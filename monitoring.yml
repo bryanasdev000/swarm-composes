@@ -16,9 +16,8 @@ services:
       placement:
         constraints:
           - node.role==manager
-          - node.platform.arch==x86_64
       restart_policy:
-        condition: on-failure
+        condition: any
 
   node-exporter:
     image: prom/node-exporter:v0.18.1
@@ -35,9 +34,6 @@ services:
       - '--collector.filesystem.ignored-mount-points'
       - "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
     deploy:
-      placement:
-        constraints:
-          - node.platform.arch==x86_64
       mode: global
       restart_policy:
         condition: on-failure
@@ -55,9 +51,8 @@ services:
       placement:
         constraints:
            - node.role==manager
-           - node.platform.arch==x86_64
       restart_policy:
-        condition: on-failure    
+        condition: any
 
   cadvisor-x86:
     image: gcr.io/google-containers/cadvisor:v0.35.0
@@ -75,7 +70,7 @@ services:
           - node.platform.arch==x86_64
       mode: global
       restart_policy:
-        condition: on-failure
+        condition: any
 
   cadvisor-arm:
     image: unibaktr/cadvisor:v0.34.0
@@ -90,15 +85,17 @@ services:
     deploy:
       placement:
         constraints:
-          - node.platform.arch!=x86_64
+          - node.platform.arch==armv7l
+            #    resources:
+            #limits:
+            #cpus: '0.20'
+            #memory: 100M
       mode: global
       restart_policy:
-        condition: on-failure
+        condition: any
 
   grafana:
-    image: grafana/grafana:6.6.1
-    depends_on:
-      - prometheus
+    image: grafana/grafana:7.0.0
     ports:
       - '3000:3000'
     volumes:
@@ -110,11 +107,35 @@ services:
       placement:
         constraints:
           - node.role==manager
-          - node.platform.arch==x86_64
       restart_policy:
-        condition: on-failure
+        condition: any
 
+  loki:
+    image: grafana/loki:1.4.1
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki_data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    deploy:
+      placement:
+        constraints:
+          - node.role==manager
+      restart_policy:
+        condition: any
+  
+  promtail:
+    image: grafana/promtail:1.4.1
+    volumes:
+      - /var/log:/var/log
+    command: -config.file=/etc/promtail/docker-config.yaml
+    deploy:
+      mode: global
+      restart_policy:
+        condition: any
+        
 volumes:
     prometheus_data: 
     grafana_data:
-
+    loki_data:
+# docker logging loki driver 
